@@ -20,6 +20,7 @@ func (aem *AwsEc2Manager) CheckCredentials() {
 		// TODO : Find credential in configuration (using EnvParser)
 	} else {
 		fmt.Println("Found credential variable in environment variables")
+		// TODO : Create AWS Session to check whether it is valid
 	}
 
 	fmt.Println(access_id, secret_key)

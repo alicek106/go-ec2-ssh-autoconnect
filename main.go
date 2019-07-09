@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"modules"
 	"os"
+	"github.com/alicek106/go-ec2-ssh-autoconnect/src/modules"
 )
 
 func print_error_and_exit() {
@@ -32,8 +32,8 @@ func main() {
 		instance = os.Args[2]
 	}
 
-    aem := modules.AwsEc2Manager{}
-    aem.CheckCredentials()
+	aem := modules.AwsEc2Manager{}
+	aem.CheckCredentials()
 
 	switch {
 	case command == "start":
