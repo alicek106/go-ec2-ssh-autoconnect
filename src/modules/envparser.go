@@ -10,16 +10,16 @@ import (
 )
 
 type envparser struct {
-	config_path string
+	configPath string
 }
 
-func get_envparser() *envparser {
-	return &envparser{config_path: "/etc/ec2_connect_config.json"}
+func getEnvparser() *envparser {
+	return &envparser{configPath: "/etc/ec2_connect_config.json"}
 }
 
-func (ep *envparser) get_credentials() (string, string, error) {
+func (ep *envparser) getCredentials() (string, string, error) {
 	// Reference : https://tutorialedge.net/golang/parsing-json-with-golang/
-	jsonFile, err := os.Open(ep.config_path)
+	jsonFile, err := os.Open(ep.configPath)
 	if err != nil {
 		log.Fatal("Unable to open /etc/ec2_connect_config.json. Abort")
 	}
@@ -28,23 +28,21 @@ func (ep *envparser) get_credentials() (string, string, error) {
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	var result map[string]interface{}
 	json.Unmarshal([]byte(byteValue), &result)
-	secret_data := result["CONFIG"].(map[string]interface{})
+	secretData := result["CONFIG"].(map[string]interface{})
 
-	err = check_keys(secret_data, []string{"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"})
+	err = checkKeys(secretData, []string{"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"})
 	if err != nil {
 		return "", "", err
-	} else {
-		log.Println("Found credential in configuration file")
-		access_id := secret_data["AWS_ACCESS_KEY_ID"].(string)
-		secret_key := secret_data["AWS_SECRET_ACCESS_KEY"].(string)
-		return access_id, secret_key, nil
-
 	}
+	log.Println("Found credential in configuration file")
+	accessID := secretData["AWS_ACCESS_KEY_ID"].(string)
+	secretKey := secretData["AWS_SECRET_ACCESS_KEY"].(string)
+	return accessID, secretKey, nil
 }
 
-func check_keys(secret_data map[string]interface{}, data []string) error {
+func checkKeys(secretData map[string]interface{}, data []string) error {
 	for val := range data {
-		if _, ok := secret_data[data[val]]; !ok {
+		if _, ok := secretData[data[val]]; !ok {
 			return errors.New(fmt.Sprint("Cannot found key in configuration file : ", data[val]))
 		}
 	}
