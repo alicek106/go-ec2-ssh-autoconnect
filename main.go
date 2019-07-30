@@ -3,10 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
+
 	"github.com/alicek106/go-ec2-ssh-autoconnect/src/modules"
 )
 
-func print_error_and_exit() {
+func printDefaultError() {
 	fmt.Println(`Invalid arguments
         
         Usage: ec2-connect [command: connect or stop] [ec2-instance-name] [options]
@@ -17,7 +18,7 @@ func print_error_and_exit() {
 
 func main() {
 	if len(os.Args) < 2 {
-		print_error_and_exit()
+		printDefaultError()
 	}
 
 	command := os.Args[1]
@@ -43,9 +44,9 @@ func main() {
 	case command == "group":
 		fmt.Println("It's group")
 	case command == "list":
-		fmt.Println("It's list")
+		modules.ListEc2Instances(&aem)
 	default:
-		print_error_and_exit()
+		printDefaultError()
 	}
 
 	fmt.Println(command, instance, key)

@@ -34,7 +34,7 @@ func (ep *envparser) getCredentials() (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	log.Println("Found credential in configuration file")
+
 	accessID := secretData["AWS_ACCESS_KEY_ID"].(string)
 	secretKey := secretData["AWS_SECRET_ACCESS_KEY"].(string)
 	return accessID, secretKey, nil
