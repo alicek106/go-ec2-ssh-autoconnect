@@ -7,6 +7,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -68,6 +69,36 @@ func (aem *AwsEc2Manager) ValidateCredential(accessID string, secretKey string) 
 	}
 }
 
+// getFilterForName : Return filter for describing instances
+func (aem *AwsEc2Manager) getFilterForName(instanceName string) (input *ec2.DescribeInstancesInput) {
+	filters := []*ec2.Filter{
+		&ec2.Filter{
+			Name:   aws.String("tag:Name"),
+			Values: []*string{aws.String(instanceName)},
+		},
+	}
+	input = &ec2.DescribeInstancesInput{
+		Filters: filters,
+	}
+	return input
+}
+
+// GetInstanceIDs : Return instance IDs from instanceNames
+func (aem *AwsEc2Manager) GetInstanceIDs(instanceNames []string) []*string {
+	var instanceIDs = []*string{}
+	for _, instanceName := range instanceNames {
+		// If filters is defined directly in input parameter, it triggers syntax error.
+		filter := aem.getFilterForName(instanceName)
+		result, err := aem.client.DescribeInstances(filter)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			instanceIDs = append(instanceIDs, result.Reservations[0].Instances[0].InstanceId)
+		}
+	}
+	return instanceIDs
+}
+
 // ListInstances : List multiple instances.
 func (aem *AwsEc2Manager) ListInstances() {
 	result, err := aem.client.DescribeInstances(nil)
@@ -111,4 +142,32 @@ func (aem *AwsEc2Manager) ListInstances() {
 
 		writer.Flush()
 	}
+}
+
+// StartInstances : Start multiple instances.
+func (aem *AwsEc2Manager) StartInstances(instanceIDs []*string) {
+	log.Printf("Starting EC2 instance...")
+	input := &ec2.StartInstancesInput{
+		InstanceIds: instanceIDs, // It should be used with pointer
+		DryRun:      aws.Bool(true),
+	}
+	_, err := aem.client.StartInstances(input)
+	awsErr, ok := err.(awserr.Error)
+
+	if ok && awsErr.Code() == "DryRunOperation" {
+		input.DryRun = aws.Bool(false)
+		_, err := aem.client.StartInstances(input)
+		if err != nil {
+			log.Fatal("Error", err)
+		} else {
+			log.Printf("Succeed to start all instances. Waiting for instances to be active..")
+		}
+	} else { // This could be due to a lack of permissions
+		log.Fatal("Error", err)
+	}
+}
+
+// WaitUntilActive : Wait unil all instances are up and running.
+func (aem *AwsEc2Manager) WaitUntilActive(instanceIDs []*string) {
+	// TODO : Implement for waiting EC2 instances to be running
 }

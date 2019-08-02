@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alicek106/go-ec2-ssh-autoconnect/src/modules"
+	"github.com/alicek106/go-ec2-ssh-autoconnect/modules"
 )
 
 func printDefaultError() {
@@ -38,7 +38,7 @@ func main() {
 
 	switch {
 	case command == "start":
-		fmt.Println("it's start")
+		modules.StartEc2Instances(&aem, []string{instance})
 	case command == "stop":
 		fmt.Println("It's stop")
 	case command == "group":
@@ -48,6 +48,5 @@ func main() {
 	default:
 		printDefaultError()
 	}
-
-	fmt.Println(command, instance, key)
+	print(key)
 }
