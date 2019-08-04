@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"text/tabwriter"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -23,8 +24,9 @@ type Ec2InstanceInfo struct {
 
 // AwsEc2Manager : AWS EC2 Session and client amanger
 type AwsEc2Manager struct {
-	session *session.Session
-	client  *ec2.EC2
+	session             *session.Session
+	client              *ec2.EC2
+	Ec2StartWaitTimeout int
 }
 
 // CheckCredentials : Check existing credential from shell or configuartion
@@ -65,7 +67,7 @@ func (aem *AwsEc2Manager) ValidateCredential(accessID string, secretKey string) 
 	if err != nil {
 		log.Fatal(err)
 	} else {
-		log.Printf("Success to validate AWS credential.")
+		log.Printf("Succeed to validate AWS credential.")
 	}
 }
 
@@ -123,9 +125,6 @@ func (aem *AwsEc2Manager) ListInstances() {
 				for _, tag := range instance.Tags {
 					if *tag.Key == "Name" {
 						ec2InstanceInfo.instanceName = *tag.Value
-						// if len(*tag.Value) > ec2NameMaxLength {
-						// 	ec2NameMaxLength = len(*tag.Value)
-						// }
 					}
 				}
 				ec2InstanceList = append(ec2InstanceList, ec2InstanceInfo)
@@ -146,7 +145,7 @@ func (aem *AwsEc2Manager) ListInstances() {
 
 // StartInstances : Start multiple instances.
 func (aem *AwsEc2Manager) StartInstances(instanceIDs []*string) {
-	log.Printf("Starting EC2 instance...")
+	// log.Printf("Starting EC2 instance...")
 	input := &ec2.StartInstancesInput{
 		InstanceIds: instanceIDs, // It should be used with pointer
 		DryRun:      aws.Bool(true),
@@ -160,7 +159,7 @@ func (aem *AwsEc2Manager) StartInstances(instanceIDs []*string) {
 		if err != nil {
 			log.Fatal("Error", err)
 		} else {
-			log.Printf("Succeed to start all instances. Waiting for instances to be active..")
+			log.Printf("Succeed to start EC2 instances.")
 		}
 	} else { // This could be due to a lack of permissions
 		log.Fatal("Error", err)
@@ -168,6 +167,47 @@ func (aem *AwsEc2Manager) StartInstances(instanceIDs []*string) {
 }
 
 // WaitUntilActive : Wait unil all instances are up and running.
-func (aem *AwsEc2Manager) WaitUntilActive(instanceIDs []*string) {
-	// TODO : Implement for waiting EC2 instances to be running
+// Order of instanceIDs and instanceNames is same. (Refer to GetInstanceIDs)
+func (aem *AwsEc2Manager) WaitUntilActive(instanceIDs []*string, instanceNames []string) {
+	for index := range instanceIDs {
+		log.Printf("Start to waiting EC2 instance %s (instance ID : %s)...", instanceNames[index], *instanceIDs[index])
+		for tries := 1; tries <= aem.Ec2StartWaitTimeout; tries++ {
+			// If EC2 instance is not running state
+			if aem.getInstanceStatus(instanceIDs[index:index+1]) != "running" {
+				// If EC2 instance is not running state after 30s, continue to next instance.
+				if tries == 30 {
+					log.Printf("Failed to wait for EC2 instance to be active.")
+					break
+				} else {
+					// Wait seconds (aem.Ec2StartWaitTimeout)
+					log.Printf("Waiting for starting EC2 instance.. %d tries.", tries)
+					time.Sleep(time.Second)
+				}
+			} else {
+				// EC2 instance is already running, pass to wait 30 seconds for warm-up
+				if tries == 1 {
+					log.Printf("EC2 instance is in active.")
+					break
+				}
+				// Wait 30 seconds until SSH daemon is ready
+				log.Printf("EC2 instance is in active. Waiting for 30 seconds for warm-up.")
+				time.Sleep(30 * time.Second)
+				break
+			}
+		}
+	}
+}
+
+func (aem *AwsEc2Manager) getInstanceStatus(instanceID []*string) (status string) {
+	input := &ec2.DescribeInstancesInput{
+		InstanceIds: instanceID,
+	}
+	result, err := aem.client.DescribeInstances(input)
+	if err != nil {
+		log.Println("Error in waiting for EC2 instances to be active")
+		log.Fatal(err)
+	} else {
+		status = *result.Reservations[0].Instances[0].State.Name
+	}
+	return status
 }

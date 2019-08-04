@@ -33,7 +33,8 @@ func main() {
 		instance = os.Args[2]
 	}
 
-	aem := modules.AwsEc2Manager{}
+	// TODO: Ec2StartWaitTimeout should be able to set by CLI parameter, later :D
+	aem := modules.AwsEc2Manager{Ec2StartWaitTimeout: 30}
 	aem.CheckCredentials()
 
 	switch {
