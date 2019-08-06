@@ -30,6 +30,7 @@ func main() {
 		key = os.Args[3]
 		fallthrough
 	case len(os.Args) > 2:
+		key = modules.GetEnvparser().GetDefaultKey()
 		instance = os.Args[2]
 	}
 
@@ -38,6 +39,8 @@ func main() {
 	aem.CheckCredentials()
 
 	switch {
+	case command == "connect":
+		modules.ConnectSSHToInstance(&aem, instance, key)
 	case command == "start":
 		modules.StartEc2Instances(&aem, []string{instance})
 	case command == "stop":

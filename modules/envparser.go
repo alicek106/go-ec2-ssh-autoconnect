@@ -9,28 +9,20 @@ import (
 	"os"
 )
 
-type envparser struct {
+// Envparser : It parses configuration file in /etc/ec2_connect_config.json
+type Envparser struct {
 	configPath string
 }
 
-func getEnvparser() *envparser {
-	return &envparser{configPath: "/etc/ec2_connect_config.json"}
+// GetEnvparser : It returns envparser instance
+func GetEnvparser() *Envparser {
+	return &Envparser{configPath: "/etc/ec2_connect_config.json"}
 }
 
-func (ep *envparser) getCredentials() (string, string, error) {
-	// Reference : https://tutorialedge.net/golang/parsing-json-with-golang/
-	jsonFile, err := os.Open(ep.configPath)
-	if err != nil {
-		log.Fatal("Unable to open /etc/ec2_connect_config.json. Abort")
-	}
-
-	defer jsonFile.Close()
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-	var result map[string]interface{}
-	json.Unmarshal([]byte(byteValue), &result)
-	secretData := result["CONFIG"].(map[string]interface{})
-
-	err = checkKeys(secretData, []string{"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"})
+// GetCredentials : Return AWS credentials from file
+func (ep *Envparser) GetCredentials() (string, string, error) {
+	secretData := ep.OpenConfigFile()["CONFIG"].(map[string]interface{})
+	err := checkKeys(secretData, []string{"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"})
 	if err != nil {
 		return "", "", err
 	}
@@ -38,6 +30,28 @@ func (ep *envparser) getCredentials() (string, string, error) {
 	accessID := secretData["AWS_ACCESS_KEY_ID"].(string)
 	secretKey := secretData["AWS_SECRET_ACCESS_KEY"].(string)
 	return accessID, secretKey, nil
+}
+
+// GetDefaultKey : Return default SSH key from configuration file
+func (ep *Envparser) GetDefaultKey() (defaultKey string) {
+	configData := ep.OpenConfigFile()["CONFIG"].(map[string]interface{})
+	// Should I check whether EC2_SSH.. key exists? :D
+	defaultKey = configData["EC2_SSH_PRIVATE_KEY_DEFAULT"].(string)
+	return defaultKey
+}
+
+// OpenConfigFile Return osfile pointer to parse configuration file
+func (ep *Envparser) OpenConfigFile() (result map[string]interface{}) {
+	// Reference : https://tutorialedge.net/golang/parsing-json-with-golang/
+	jsonFile, err := os.Open(ep.configPath)
+	if err != nil {
+		log.Fatal("Unable to open /etc/ec2_connect_config.json. Abort")
+	}
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	json.Unmarshal([]byte(byteValue), &result)
+	jsonFile.Close()
+	return result
 }
 
 func checkKeys(secretData map[string]interface{}, data []string) error {

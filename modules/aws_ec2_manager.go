@@ -37,8 +37,8 @@ func (aem *AwsEc2Manager) CheckCredentials() {
 	var err error
 	if len(accessID) == 0 || len(secretKey) == 0 {
 		log.Printf("Cannot found credential in environment variable.")
-		ep := getEnvparser()
-		accessID, secretKey, err = ep.getCredentials()
+		ep := GetEnvparser()
+		accessID, secretKey, err = ep.GetCredentials()
 		if err != nil {
 			log.Fatal(err)
 		} else {
@@ -69,20 +69,6 @@ func (aem *AwsEc2Manager) ValidateCredential(accessID string, secretKey string) 
 	} else {
 		log.Printf("Succeed to validate AWS credential.")
 	}
-}
-
-// getFilterForName : Return filter for describing instances
-func (aem *AwsEc2Manager) getFilterForName(instanceName string) (input *ec2.DescribeInstancesInput) {
-	filters := []*ec2.Filter{
-		&ec2.Filter{
-			Name:   aws.String("tag:Name"),
-			Values: []*string{aws.String(instanceName)},
-		},
-	}
-	input = &ec2.DescribeInstancesInput{
-		Filters: filters,
-	}
-	return input
 }
 
 // GetInstanceIDs : Return instance IDs from instanceNames
@@ -145,7 +131,6 @@ func (aem *AwsEc2Manager) ListInstances() {
 
 // StartInstances : Start multiple instances.
 func (aem *AwsEc2Manager) StartInstances(instanceIDs []*string) {
-	// log.Printf("Starting EC2 instance...")
 	input := &ec2.StartInstancesInput{
 		InstanceIds: instanceIDs, // It should be used with pointer
 		DryRun:      aws.Bool(true),
@@ -198,6 +183,16 @@ func (aem *AwsEc2Manager) WaitUntilActive(instanceIDs []*string, instanceNames [
 	}
 }
 
+// GetInstancePublicIP : Return EC2 instance public IP from instance name
+func (aem *AwsEc2Manager) GetInstancePublicIP(instanceName string) (publicIP string) {
+	filter := aem.getFilterForName(instanceName)
+	result, err := aem.client.DescribeInstances(filter)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return *result.Reservations[0].Instances[0].PublicIpAddress
+}
+
 func (aem *AwsEc2Manager) getInstanceStatus(instanceID []*string) (status string) {
 	input := &ec2.DescribeInstancesInput{
 		InstanceIds: instanceID,
@@ -210,4 +205,18 @@ func (aem *AwsEc2Manager) getInstanceStatus(instanceID []*string) (status string
 		status = *result.Reservations[0].Instances[0].State.Name
 	}
 	return status
+}
+
+// getFilterForName : Return filter for describing instances
+func (aem *AwsEc2Manager) getFilterForName(instanceName string) (input *ec2.DescribeInstancesInput) {
+	filters := []*ec2.Filter{
+		&ec2.Filter{
+			Name:   aws.String("tag:Name"),
+			Values: []*string{aws.String(instanceName)},
+		},
+	}
+	input = &ec2.DescribeInstancesInput{
+		Filters: filters,
+	}
+	return input
 }

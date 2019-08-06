@@ -1,6 +1,11 @@
 package modules
 
-import "log"
+import (
+	"fmt"
+	"log"
+	"os/exec"
+	"syscall"
+)
 
 // ListEc2Instances : List all EC2 instances
 func ListEc2Instances(aem *AwsEc2Manager) {
@@ -16,4 +21,23 @@ func StartEc2Instances(aem *AwsEc2Manager, instanceNames []string) {
 	}
 
 	aem.StartInstances(instanceIDs)
+}
+
+// ConnectSSHToInstance : Connect SSH to EC2 instance
+// Don't use ssh client library or exec function! These will not work. :(
+func ConnectSSHToInstance(aem *AwsEc2Manager, instanceName string, key string) {
+	// TODO : Implement custom key from configuration file. (for --key=.. parameter)
+	// TODO : ConnectSSHToInstance should be called in StartEc2Instances
+	instanceIP := aem.GetInstancePublicIP(instanceName)
+	var args = []string{"ssh", "-oStrictHostKeyChecking=no", fmt.Sprintf("ubuntu@%s", instanceIP)}
+	args = append(args, fmt.Sprintf("-i%s", key))
+
+	binary, lookErr := exec.LookPath("ssh")
+	if lookErr != nil {
+		panic(lookErr)
+	}
+	execErr := syscall.Exec(binary, args, nil)
+	if execErr != nil {
+		panic(execErr)
+	}
 }
