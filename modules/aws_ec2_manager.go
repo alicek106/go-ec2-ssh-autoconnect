@@ -193,6 +193,28 @@ func (aem *AwsEc2Manager) GetInstancePublicIP(instanceName string) (publicIP str
 	return *result.Reservations[0].Instances[0].PublicIpAddress
 }
 
+// StopInstances : Stop multiple instances.
+func (aem *AwsEc2Manager) StopInstances(instanceIDs []*string) {
+	input := &ec2.StopInstancesInput{
+		InstanceIds: instanceIDs, // It should be used with pointer
+		DryRun:      aws.Bool(true),
+	}
+	_, err := aem.client.StopInstances(input)
+	awsErr, ok := err.(awserr.Error)
+
+	if ok && awsErr.Code() == "DryRunOperation" {
+		input.DryRun = aws.Bool(false)
+		_, err := aem.client.StopInstances(input)
+		if err != nil {
+			log.Fatal("Error", err)
+		} else {
+			log.Printf("Succeed to stop EC2 instances.")
+		}
+	} else { // This could be due to a lack of permissions
+		log.Fatal("Error", err)
+	}
+}
+
 func (aem *AwsEc2Manager) getInstanceStatus(instanceID []*string) (status string) {
 	input := &ec2.DescribeInstancesInput{
 		InstanceIds: instanceID,

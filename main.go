@@ -23,14 +23,16 @@ func main() {
 	}
 
 	command := os.Args[1]
-	instance := os.Args[2]
 	var key string
+	var instance string
 
 	switch {
 	case len(os.Args) > 3:
 		key = modules.GetEnvparser().GetCustomKey(strings.Split(os.Args[3], "=")[1])
+		instance = os.Args[2]
 	case len(os.Args) > 2:
 		key = modules.GetEnvparser().GetDefaultKey()
+		instance = os.Args[2]
 	}
 
 	// TODO: Ec2StartWaitTimeout should be able to set by CLI parameter, later :D
@@ -43,7 +45,7 @@ func main() {
 	case command == "start":
 		modules.StartEc2Instances(&aem, []string{instance})
 	case command == "stop":
-		fmt.Println("It's stop")
+		modules.StopEc2Instances(&aem, []string{instance})
 	case command == "group":
 		fmt.Println("It's group")
 	case command == "list":
