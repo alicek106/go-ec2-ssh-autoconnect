@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/alicek106/go-ec2-ssh-autoconnect/modules"
 )
@@ -22,16 +23,14 @@ func main() {
 	}
 
 	command := os.Args[1]
-	var instance string
+	instance := os.Args[2]
 	var key string
 
 	switch {
 	case len(os.Args) > 3:
-		key = os.Args[3]
-		fallthrough
+		key = modules.GetEnvparser().GetCustomKey(strings.Split(os.Args[3], "=")[1])
 	case len(os.Args) > 2:
 		key = modules.GetEnvparser().GetDefaultKey()
-		instance = os.Args[2]
 	}
 
 	// TODO: Ec2StartWaitTimeout should be able to set by CLI parameter, later :D
@@ -52,5 +51,4 @@ func main() {
 	default:
 		printDefaultError()
 	}
-	print(key)
 }

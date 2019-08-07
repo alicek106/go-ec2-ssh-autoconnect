@@ -26,7 +26,6 @@ func StartEc2Instances(aem *AwsEc2Manager, instanceNames []string) {
 // ConnectSSHToInstance : Connect SSH to EC2 instance
 // Don't use ssh client library or exec function! These will not work. :(
 func ConnectSSHToInstance(aem *AwsEc2Manager, instanceName string, key string) {
-	// TODO : Implement custom key from configuration file. (for --key=.. parameter)
 	// TODO : ConnectSSHToInstance should be called in StartEc2Instances
 	instanceIP := aem.GetInstancePublicIP(instanceName)
 	var args = []string{"ssh", "-oStrictHostKeyChecking=no", fmt.Sprintf("ubuntu@%s", instanceIP)}

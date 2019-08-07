@@ -54,6 +54,17 @@ func (ep *Envparser) OpenConfigFile() (result map[string]interface{}) {
 	return result
 }
 
+// GetCustomKey : Return custom key path from configuration file
+func (ep *Envparser) GetCustomKey(key string) (customKeyPath string) {
+	configData := ep.OpenConfigFile()["CONFIG"].(map[string]interface{})
+	if configData[key] != nil {
+		customKeyPath = configData[key].(string)
+	} else {
+		log.Fatal(fmt.Sprintf("Cannot find key [%s] in configuration file", key))
+	}
+	return customKeyPath
+}
+
 func checkKeys(secretData map[string]interface{}, data []string) error {
 	for val := range data {
 		if _, ok := secretData[data[val]]; !ok {
