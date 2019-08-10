@@ -65,6 +65,21 @@ func (ep *Envparser) GetCustomKey(key string) (customKeyPath string) {
 	return customKeyPath
 }
 
+// GetGroupInstanceNames : Return instance names of named group in configuration file
+func (ep *Envparser) GetGroupInstanceNames(groupName string) (instanceNames []string) {
+	configData := ep.OpenConfigFile()[groupName]
+	if configData != nil {
+		instanceGroupData := configData.([]interface{})
+		instanceNames = make([]string, len(instanceGroupData))
+		for index, value := range instanceGroupData {
+			instanceNames[index] = value.(string)
+		}
+	} else {
+		log.Fatal(fmt.Sprintf("Cannot find group [%s] in configuration file", groupName))
+	}
+	return instanceNames
+}
+
 func checkKeys(secretData map[string]interface{}, data []string) error {
 	for val := range data {
 		if _, ok := secretData[data[val]]; !ok {
