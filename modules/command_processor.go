@@ -3,8 +3,8 @@ package modules
 import (
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
-	"syscall"
 )
 
 // ListEc2Instances : List all EC2 instances
@@ -44,15 +44,9 @@ func ConnectSSHToInstance(aem *AwsEc2Manager, instanceName string, key string) {
 	}
 
 	instanceIP := aem.GetInstancePublicIP(instanceName)
-	var args = []string{"ssh", "-oStrictHostKeyChecking=no", fmt.Sprintf("ubuntu@%s", instanceIP)}
-	args = append(args, fmt.Sprintf("-i%s", key))
-
-	binary, lookErr := exec.LookPath("ssh")
-	if lookErr != nil {
-		panic(lookErr)
-	}
-	execErr := syscall.Exec(binary, args, nil)
-	if execErr != nil {
-		panic(execErr)
-	}
+	cmd := exec.Command("ssh", "-oStrictHostKeyChecking=no", fmt.Sprintf("ubuntu@%s", instanceIP), fmt.Sprintf("-i%s", key))
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Run()
 }
