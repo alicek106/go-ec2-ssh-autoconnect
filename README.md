@@ -24,7 +24,7 @@ Features that this script provide is..
 Download release binary. Currently, MacOS is only supported.
 
 ```
-$ wget https://github.com/alicek106/go-ec2-ssh-autoconnect/releases/download/0.1v/ec2-connect-darwin && \
+$ wget https://github.com/alicek106/go-ec2-ssh-autoconnect/releases/download/0.2v/ec2-connect-darwin && \
 chmod +x ec2-connect-darwin && \
 mv ec2-connect-darwin /usr/local/bin/ec2-connect
 ```
