@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"text/tabwriter"
 	"time"
 
@@ -116,6 +117,10 @@ func (aem *AwsEc2Manager) ListInstances() {
 				ec2InstanceList = append(ec2InstanceList, ec2InstanceInfo)
 			}
 		}
+
+		sort.Slice(ec2InstanceList, func(i, j int) bool {
+			return ec2InstanceList[i].instanceName < ec2InstanceList[j].instanceName
+		})
 
 		writer := tabwriter.NewWriter(os.Stdout, 16, 8, 2, '\t', 0)
 		fmt.Fprintln(writer, "Instance ID\tInstance Name\tIP Address\tStatus")
