@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"github.com/alicek106/go-ec2-ssh-autoconnect/modules"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -20,10 +21,18 @@ func TestDescribeEc2Instances(t *testing.T) {
 	// Create new EC2 client
 	ec2Svc := ec2.New(sess)
 	// Call to get detailed information on each instance
-	result, err := ec2Svc.DescribeInstances(nil)
+	_, err := ec2Svc.DescribeInstances(nil)
 	if err != nil {
-		fmt.Println("Error", err)
+		fmt.Println("TestDescribeEc2Instances: Error", err)
 	} else {
-		fmt.Println("Success", result)
+		fmt.Println("TestDescribeEc2Instances: Success to describe instances")
 	}
+}
+
+func TestGetUsernamePerOS(t *testing.T) {
+	aem := modules.AwsEc2Manager{Ec2StartWaitTimeout: 30}
+	aem.CheckCredentials()
+
+	username := aem.GetUsernamePerOS("bakery")
+	fmt.Printf("TestGetUsernamePerOS: Found username: %s", username)
 }

@@ -44,7 +44,8 @@ func ConnectSSHToInstance(aem *AwsEc2Manager, instanceName string, key string) {
 	}
 
 	instanceIP := aem.GetInstancePublicIP(instanceName)
-	cmd := exec.Command("ssh", "-oStrictHostKeyChecking=no", fmt.Sprintf("ubuntu@%s", instanceIP), fmt.Sprintf("-i%s", key))
+	sshUserName := aem.GetUsernamePerOS(instanceName)
+	cmd := exec.Command("ssh", "-oStrictHostKeyChecking=no", fmt.Sprintf("%s@%s", sshUserName, instanceIP), fmt.Sprintf("-i%s", key))
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

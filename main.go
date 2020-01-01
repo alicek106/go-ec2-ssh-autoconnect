@@ -11,7 +11,7 @@ import (
 func printDefaultError() {
 	fmt.Println(`Invalid arguments
         
-        Usage: ec2-connect [command: connect, start, stop, group] [ec2-instance-name] [options]
+        Usage: ec2-connect [command: connect, start, stop, group, version] [ec2-instance-name] [options]
         --key=mykey (Optional) : Use 'mykey' as a ssh private key in /etc/ec2_connect_config.ini.
                                  By default, [CONFIG][EC2_SSH_PRIVATE_KEY_DEFAULT] is used.`)
 	os.Exit(100)
@@ -20,7 +20,7 @@ func printDefaultError() {
 // Important!!! ###
 // Handling parameter should be changed later. It is so dirty way.
 func checkCommand(command string) bool {
-	commands := []string{"start", "stop", "connect", "group", "list"}
+	commands := []string{"start", "stop", "connect", "group", "list", "version"}
 	for _, value := range commands {
 		if value == command {
 			return true
@@ -43,6 +43,11 @@ func main() {
 	command := os.Args[1]
 	var key string
 	var instance string
+
+	if command == "version"{
+		fmt.Println("v0.4")
+		return
+	}
 
 	if command != "group" {
 		switch {

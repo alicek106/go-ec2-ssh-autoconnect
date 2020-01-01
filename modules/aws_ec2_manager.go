@@ -220,6 +220,34 @@ func (aem *AwsEc2Manager) StopInstances(instanceIDs []*string) {
 	}
 }
 
+// GetUsernamePerOS : Return proper SSH username per EC2 instsance OS image
+func (aem *AwsEc2Manager) GetUsernamePerOS(instanceName string) (sshUsername string){
+	filter := aem.getFilterForName(instanceName)
+	result, err := aem.client.DescribeInstances(filter)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	amiImageID := *result.Reservations[0].Instances[0].ImageId
+	image, err := aem.client.DescribeImages(&ec2.DescribeImagesInput{
+		ImageIds: []*string{
+			aws.String(amiImageID),
+		},
+	})
+	if err != nil{
+		fmt.Println(err)
+	}
+
+	imageName := *image.Images[0].Name
+	switch{
+	case imageName == "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-20191002":
+		return "ubuntu"
+	default:
+		fmt.Printf("Instance image %s is not registered in ec2-connect. Trying as user \"ubuntu\"", imageName)
+		return "ubuntu"
+	}
+}
+
 func (aem *AwsEc2Manager) getInstanceStatus(instanceID []*string) (status string) {
 	input := &ec2.DescribeInstancesInput{
 		InstanceIds: instanceID,
