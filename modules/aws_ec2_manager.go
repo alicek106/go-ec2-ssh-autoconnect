@@ -54,7 +54,15 @@ func (aem *AwsEc2Manager) CheckCredentials() {
 
 // ValidateCredential : Validate AWS Credential
 func (aem *AwsEc2Manager) ValidateCredential(accessID string, secretKey string) {
-	session.Must(session.NewSession())
+	sess, err := session.NewSession()
+	switch err.(type) {
+	default: // no error
+		session.Must(sess, err)
+	case session.SharedConfigAssumeRoleError:
+		log.Fatal("Error from shared aws config credential assume role (SharedConfigAssumeRoleError). Abort")
+	case error:
+		log.Fatal(err.Error())
+	}
 
 	// Load session
 	aem.session = session.Must(session.NewSession(&aws.Config{
@@ -64,7 +72,7 @@ func (aem *AwsEc2Manager) ValidateCredential(accessID string, secretKey string) 
 
 	// Test AWS function using provided credential
 	aem.client = ec2.New(aem.session)
-	_, err := aem.client.DescribeInstances(nil)
+	_, err = aem.client.DescribeInstances(nil)
 	if err != nil {
 		log.Fatal(err)
 	} else {
