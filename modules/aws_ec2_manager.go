@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -247,13 +248,16 @@ func (aem *AwsEc2Manager) GetUsernamePerOS(instanceName string) (sshUsername str
 	}
 
 	imageName := *image.Images[0].Name
-	switch{
-	case imageName == "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-20191002":
+	if strings.Contains(imageName, "ubuntu") {
+		log.Printf("Found AMI name : %s, trying to ssh using ubuntu", imageName)
 		return "ubuntu"
-	default:
-		fmt.Printf("Instance image %s is not registered in ec2-connect. Trying as user \"ubuntu\"", imageName)
-		return "ubuntu"
+	}else if(strings.Contains(imageName, "amazon") || strings.Contains(imageName, "redhat")){
+		log.Printf("Found AMI name : %s, trying to ssh using ec2-user", imageName)
+		return "ec2-user"
 	}
+
+	log.Fatalf("Not found appropriate user name for ami : %s", imageName)
+	return ""
 }
 
 func (aem *AwsEc2Manager) getInstanceStatus(instanceID []*string) (status string) {
