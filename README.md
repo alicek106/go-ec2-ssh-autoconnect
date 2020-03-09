@@ -33,7 +33,7 @@ mv ec2-connect-darwin /usr/local/bin/ec2-connect
 
 Create configuration file as **/etc/ec2_connect_config.yaml** like below.
 
-```
+```yaml
 version: v1
 spec:
   credentials:
