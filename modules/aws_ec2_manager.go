@@ -38,7 +38,7 @@ func (aem *AwsEc2Manager) CheckCredentials() {
 	secretKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 	var err error
 	if len(accessID) == 0 || len(secretKey) == 0 {
-		log.Printf("Cannot found credential in environment variable.")
+		log.Printf("Cannot find credential in environment variable.")
 		ep := GetEnvparser()
 		accessID, secretKey, err = ep.GetCredentials()
 		if err != nil {
@@ -91,6 +91,9 @@ func (aem *AwsEc2Manager) GetInstanceIDs(instanceNames []string) []*string {
 		if err != nil {
 			fmt.Println(err)
 		} else {
+			if len(result.Reservations) == 0{
+				log.Fatalf("Cannot find instance name [%s]. Abort", instanceName)
+			}
 			instanceIDs = append(instanceIDs, result.Reservations[0].Instances[0].InstanceId)
 		}
 	}

@@ -8,4 +8,5 @@ require (
 	github.com/smartystreets/goconvey v0.0.0-20190710185942-9d28bd7c0945 // indirect
 	github.com/stretchr/testify v1.3.0 // indirect
 	gopkg.in/ini.v1 v1.44.0
+	gopkg.in/yaml.v2 v2.2.8
 )

@@ -45,7 +45,7 @@ func main() {
 	var instance string
 
 	if command == "version"{
-		fmt.Println("v0.4")
+		fmt.Println("v0.6")
 		return
 	}
 
