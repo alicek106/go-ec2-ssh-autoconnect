@@ -37,7 +37,7 @@ Create configuration file as **/etc/ec2_connect_config.yaml** like below.
 version: v1
 spec:
   credentials:
-    accessKey: "... :D
+    accessKey: "... :D"
     secretKey: "... :D"
 
   privateKeys:
