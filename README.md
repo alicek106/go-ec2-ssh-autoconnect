@@ -24,47 +24,49 @@ Features that this script provide is..
 Download release binary. Currently, MacOS is only supported.
 
 ```
-$ wget https://github.com/alicek106/go-ec2-ssh-autoconnect/releases/download/0.2v/ec2-connect-darwin && \
+$ wget https://github.com/alicek106/go-ec2-ssh-autoconnect/releases/download/v0.6/ec2-connect-darwin && \
 chmod +x ec2-connect-darwin && \
 mv ec2-connect-darwin /usr/local/bin/ec2-connect
 ```
 
 ## 2.2 Create configuration file
 
-Create configuration file as **/etc/ec2_connect_config.json** like below.
+Create configuration file as **/etc/ec2_connect_config.yaml** like below.
 
 ```
-$ cat /etc/ec2_connect_config.json
-{
-    "CONFIG":{
-        "AWS_ACCESS_KEY_ID": "...",
-        "AWS_SECRET_ACCESS_KEY": "...",
-        "EC2_SSH_PRIVATE_KEY_DEFAULT": "/Users/alice/default-key.pem",
-        "MY_CUSTOM_KEY_PATH": "/Users/alice/Desktop/custom-key.pem"
-    },
-    "kubeadm_part":[
-        "kubeadm-master",
-        "kubeadm-worker0"
-    ]
-}
+version: v1
+spec:
+  credentials:
+    accessKey: "... :D
+    secretKey: "... :D"
+
+  privateKeys:
+  - name: "default"
+    path: "/Users/alicek106/dev/keys/DockerEngineTestInstance.pem"
+  - name: "customKey1"
+    path: "/Users/alicek106/dev/keys/VaultAdminKey.pem"
+
+  instanceGroups:
+  - name: "kubeadm_part"
+    instances: ["kubeadm_master", "kubeadm_worker0"]
+  - name: "kubeadm"
+    instances: ["kubeadm_master", "kubeadm_worker0", "kubeadm_worker1", "kubeadm_worker2"]
+  - name: "consul"
+    instances: ["consul-1", "consul-2", "consul-3"]
+  - name: "vault"
+    instances: ["vault-1-active", "vault-2-standby"]
 ```
 
-Configuration file consists of two part.
+Configuration file consists of three part.
 
-### [1] CONFIG 
-
-- **AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY** : AWS credentials
-- **EC2_SSH_PRIVATE_KEY_DEFAULT** : Default SSH private key when using **ec2-connect connect** for a EC2 instance
-- **Custom SSH Key** : You can define another SSH private key to connect SSH. It is used by **--key** parameter in command.
-
-### [2] User defined EC2 group
-
-- It defines group for starting and stoping multiple EC2 instances. Above example defined 'kubeadm_part' group, so if you use command **ec2-connect group start kubeadm_part**, it will start two instances (kubeadm-worker, kubeadm-worker0).
+- **spec.credentails.accessKey and secretKey** : AWS credentials
+- **spec.privateKeys** : Default SSH private key when using **ec2-connect connect** for a EC2 instance. By default, privateKey named "default" will be used, but you can define another SSH private key to connect SSH. It is used by **--key** parameter in command
+- **spec.instanceGroups** : It defines group for starting and stoping multiple EC2 instances. Above example defined 'kubeadm_part' group, so if you use command **ec2-connect group start kubeadm_part**, it will start two instances (kubeadm-worker, kubeadm-worker0).
 
 
 ## 2.3 Export AWS credentials to shell (optional)
 
-After that, set AWS credentials in bash. It can also be set by ~/.aws/credentials. If you specified credentials in /etc/ec2_connect_config.json, you don't have to export variables like below.
+After that, set AWS credentials in bash. It can also be set by ~/.aws/credentials. If you specified credentials in /etc/ec2_connect_config.yaml, you don't have to export variables like below.
 
 ```
 $ export AWS_ACCESS_KEY_ID=...
@@ -90,7 +92,7 @@ $ export AWS_SECRET_ACCESS_KEY=...
 
 2. Start EC2 instance using **ec2-connect start**
    ```
-   $ $ ec2-connect start Test
+   $ ec2-connect start Test
    2019/08/11 22:26:22 Cannot found credential in environment variable.
    2019/08/11 22:26:22 Found credential in configuration file.
    2019/08/11 22:26:22 Succeed to validate AWS credential.
@@ -137,7 +139,7 @@ $ export AWS_SECRET_ACCESS_KEY=...
    2019/08/11 22:28:13 Succeed to stop EC2 instances.
    ```
 
-5. If you defined **custom group** in /etc/ec2_connect_config.json, you can use 'group start' or 'group stop'
+5. If you defined **custom group** in /etc/ec2_connect_config.yaml, you can use 'group start' or 'group stop'
 
    ```
    $ ec2-connect group start kubeadm_part
@@ -150,4 +152,3 @@ $ export AWS_SECRET_ACCESS_KEY=...
    ...
    ```
    
-
