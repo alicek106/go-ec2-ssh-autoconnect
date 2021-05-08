@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -47,6 +48,10 @@ func (ep *Envparser) GetCredentials() (string, string, error) {
 	// TODO : Check yamlContent if keys exist
 	accessID := ep.yamlContent.Spec.Credentials.AccessKey
 	secretKey := ep.yamlContent.Spec.Credentials.SecretKey
+
+	if accessID == "" || secretKey == "" {
+		return "", "", errors.New("Cannot find credentials in configuration file")
+	}
 	return accessID, secretKey, nil
 }
 

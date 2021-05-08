@@ -44,38 +44,52 @@ type AwsEc2Manager struct {
 
 // CheckCredentials : Check existing credential from shell or configuartion
 func (aem *AwsEc2Manager) CheckCredentials() {
-	// TODO : Check Credential from configuration or env var
+	// 1. Check fron env
 	accessID := os.Getenv("AWS_ACCESS_KEY_ID")
 	secretKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 	var err error
-	if len(accessID) == 0 || len(secretKey) == 0 {
-		log.Printf("Cannot find credential in environment variable.")
-		ep := config.GetEnvparser()
-		accessID, secretKey, err = ep.GetCredentials()
-		if err != nil {
-			log.Fatal(err)
-		} else {
-			log.Println("Found credential in configuration file.")
-		}
-	} else {
-		log.Println("Found credential variable in environment variables")
+	if len(accessID) == 1 && len(secretKey) == 1 {
+		log.Println("Loading credentials from environment values..")
+		aem.loadCredentialFromSecret(accessID, secretKey)
+		// Load session from env key
 	}
 
-	aem.ValidateCredential(accessID, secretKey)
+	// 2. Check from configuration file
+	ep := config.GetEnvparser()
+	accessID, secretKey, err = ep.GetCredentials()
+	if err == nil {
+		log.Println("Loading credentials from configuration file..")
+		aem.loadCredentialFromSecret(accessID, secretKey)
+	}
+
+	// 3. Check from AWS Profile (AWS_PROFILE)
+	// It covers (1) assume role profile (AWS_PROFILE refer to ~/.aws/config when using role_arn and shared config)
+	// (2) and AWS_PROFILE with static credentials only defined in ~/.aws/credentials
+	err = aem.loadCredentialFromProfile()
+	if err != nil {
+		log.Fatalf("Error to load : %s", err)
+		os.Exit(100)
+	}
 }
 
-// ValidateCredential : Validate AWS Credential
-func (aem *AwsEc2Manager) ValidateCredential(accessID string, secretKey string) {
-	sess, err := session.NewSession()
-	switch err.(type) {
-	default: // no error
-		session.Must(sess, err)
-	case session.SharedConfigAssumeRoleError:
-		log.Fatal("Error from shared aws config credential assume role (SharedConfigAssumeRoleError). Abort")
-	case error:
-		log.Fatal(err.Error())
+func (aem *AwsEc2Manager) loadCredentialFromProfile() (err error) {
+	aem.session = session.Must(session.NewSessionWithOptions(session.Options{
+		Config:                  aws.Config{
+			Region: aws.String(config.GetEnvparser().GetRegion()),
+		},
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+	aem.client = ec2.New(aem.session)
+	_, err = aem.client.DescribeInstances(nil)
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		log.Printf("Succeed to validate AWS credential.")
 	}
+	return err
+}
 
+func (aem *AwsEc2Manager) loadCredentialFromSecret(accessID string, secretKey string) {
 	// Load session
 	aem.session = session.Must(session.NewSession(&aws.Config{
 		Region:      aws.String(config.GetEnvparser().GetRegion()),
@@ -84,7 +98,7 @@ func (aem *AwsEc2Manager) ValidateCredential(accessID string, secretKey string) 
 
 	// Test AWS function using provided credential
 	aem.client = ec2.New(aem.session)
-	_, err = aem.client.DescribeInstances(nil)
+	_, err := aem.client.DescribeInstances(nil)
 	if err != nil {
 		log.Fatal(err)
 	} else {
