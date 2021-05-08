@@ -36,6 +36,8 @@ Create configuration file as **/etc/ec2_connect_config.yaml** like below.
 ```yaml
 version: v1
 spec:
+  region: "ap-northeast-2"
+
   # .spec.credentials is Optional. Instead you can define keys in ~/.aws/credentials
   credentials: 
     accessKey: "... :D"
@@ -58,8 +60,9 @@ spec:
     instances: ["vault-1-active", "vault-2-standby"]
 ```
 
-Configuration file consists of three part.
+Configuration file consists of four part.
 
+- **region** : AWS region to use. Instances of only selected region are shown and managed in ec2-connect.
 - **spec.credentails.accessKey and secretKey** : Optional. AWS credentials to use. You can define in ~/.aws/credential as a static credential. Or you can also use assume role from ~/.aws/config (by source_profile and role_arn) to ~/.aws/credentials by shared config.
 - **spec.privateKeys** : Default SSH private key when using **ec2-connect connect** for a EC2 instance. By default, privateKey named "default" will be used, but you can define another SSH private key to connect SSH. It is used by **--key** parameter in command
 - **spec.instanceGroups** : It defines group for starting and stoping multiple EC2 instances. Above example defined 'kubeadm_part' group, so if you use command **ec2-connect group start kubeadm_part**, it will start two instances (kubeadm-worker, kubeadm-worker0).
