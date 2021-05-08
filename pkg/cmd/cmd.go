@@ -13,7 +13,7 @@ import (
 
 var (
 	key string
-	version      = "99.99.99"
+	version      = "v0.7" // TODO : version should be injected in build time
 	buildDate    = "1970-01-01T00:00:00Z"
 	gitCommit    = ""
 )
