@@ -24,7 +24,7 @@ Features that this script provide is..
 Download release binary. Currently, MacOS is only supported.
 
 ```
-$ wget https://github.com/alicek106/go-ec2-ssh-autoconnect/releases/download/v0.6/ec2-connect-darwin && \
+$ wget https://github.com/alicek106/go-ec2-ssh-autoconnect/releases/download/v0.7/ec2-connect-darwin && \
 chmod +x ec2-connect-darwin && \
 mv ec2-connect-darwin /usr/local/bin/ec2-connect
 ```
@@ -36,14 +36,15 @@ Create configuration file as **/etc/ec2_connect_config.yaml** like below.
 ```yaml
 version: v1
 spec:
-  credentials:
+  # .spec.credentials is Optional. Instead you can define keys in ~/.aws/credentials
+  credentials: 
     accessKey: "... :D"
     secretKey: "... :D"
 
   privateKeys:
-  - name: "default"
+  - name: "default" # You should define default key
     path: "/Users/alicek106/dev/keys/DockerEngineTestInstance.pem"
-  - name: "customKey1"
+  - name: "customKey1" # Optional. you can use this key as alternative
     path: "/Users/alicek106/dev/keys/VaultAdminKey.pem"
 
   instanceGroups:
@@ -59,19 +60,20 @@ spec:
 
 Configuration file consists of three part.
 
-- **spec.credentails.accessKey and secretKey** : AWS credentials
+- **spec.credentails.accessKey and secretKey** : Optional. AWS credentials to use. You can define in ~/.aws/credential as a static credential. Or you can also use assume role from ~/.aws/config (by source_profile and role_arn) to ~/.aws/credentials by shared config.
 - **spec.privateKeys** : Default SSH private key when using **ec2-connect connect** for a EC2 instance. By default, privateKey named "default" will be used, but you can define another SSH private key to connect SSH. It is used by **--key** parameter in command
 - **spec.instanceGroups** : It defines group for starting and stoping multiple EC2 instances. Above example defined 'kubeadm_part' group, so if you use command **ec2-connect group start kubeadm_part**, it will start two instances (kubeadm-worker, kubeadm-worker0).
 
 
-## 2.3 Export AWS credentials to shell (optional)
+## 2.3 Setting AWS credential
 
-After that, set AWS credentials in bash. It can also be set by ~/.aws/credentials. If you specified credentials in /etc/ec2_connect_config.yaml, you don't have to export variables like below.
+AWS credentials priority is like below.
 
-```
-$ export AWS_ACCESS_KEY_ID=...
-$ export AWS_SECRET_ACCESS_KEY=...
-```
+1. Define credentials in bash environment values: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY  (High Priority)
+2. Define credentials in /etc/ec2_connect_config.yaml (Medium Priority)
+3. Define credentials in ~/.aws/credentials (Low Priority)
+
+FYI, I'm using third way (~/.aws/credentials) :D
 
 # 3. How to use (Easy!)
 
@@ -99,7 +101,7 @@ $ export AWS_SECRET_ACCESS_KEY=...
    2019/08/11 22:26:23 Starting EC2 instance : Test (instance ID: i-0994dac6654fd59e1)
    2019/08/11 22:26:23 Succeed to start EC2 instances.
    ```
-3. Connect to EC2 instance by **ec2-connect connect [EC2 instance name]**. This command uses private key defined in /etc/ec2_connect_config.json (EC2_SSH_PRIVATE_KEY_DEFAULT)
+3. Connect to EC2 instance by **ec2-connect connect [EC2 instance name]**. This command uses private key defined in /etc/ec2_connect_config.yaml (spec.privateKeys)
 
    ```
    $ ec2-connect connect Test
@@ -121,7 +123,7 @@ $ export AWS_SECRET_ACCESS_KEY=...
    
    > **Tip** : If a instance is in STOP state, 'connect' command automatically start the instance and connect SSH. So you don't need to command 'start' actually. Just use **connect**!
    
-   Or, you can use user-defined key in ec2_connect_config.json by specifying --key. By default, this script uses EC2_SSH_PRIVATE_KEY_DEFAULT in config file.
+   Or, you can use user-defined key in ec2_connect_config.yaml by specifying --key. By default, this script uses "default" key in config file.
 
    ```
    $ ec2-connect connect Test --key=MY_CUSTOM_KEY_PATH
