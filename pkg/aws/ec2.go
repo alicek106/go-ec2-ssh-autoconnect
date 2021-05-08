@@ -78,7 +78,7 @@ func (aem *AwsEc2Manager) ValidateCredential(accessID string, secretKey string) 
 
 	// Load session
 	aem.session = session.Must(session.NewSession(&aws.Config{
-		Region:      aws.String("ap-northeast-2"),
+		Region:      aws.String(config.GetEnvparser().GetRegion()),
 		Credentials: credentials.NewStaticCredentials(accessID, secretKey, ""),
 	}))
 

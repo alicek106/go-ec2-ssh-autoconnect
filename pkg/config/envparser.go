@@ -7,9 +7,11 @@ import (
 	"log"
 )
 
+// TODO : Replace this package to viper
 type YamlParserV1 struct {
 	Version string `yaml:"version"`
 	Spec    struct {
+		Region string `yaml:"region"`
 		Credentials struct {
 			AccessKey string `yaml:"accessKey"`
 			SecretKey string `yaml:"secretKey"`
@@ -92,6 +94,11 @@ func (ep *Envparser) GetGroupInstanceNames(groupName string) (instanceNames []st
 	}
 	log.Fatal(fmt.Sprintf("Cannot find group [%s] in configuration file", groupName))
 	return instanceNames
+}
+
+func (ep *Envparser) GetRegion() (string) {
+	region := ep.yamlContent.Spec.Region
+	return region
 }
 
 //func checkKeys(secretData map[string]interface{}, data []string) error {
