@@ -2,7 +2,7 @@ package test
 
 import (
 	"fmt"
-	"github.com/alicek106/go-ec2-ssh-autoconnect/modules"
+	aws2 "github.com/alicek106/go-ec2-ssh-autoconnect/pkg/aws"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -30,7 +30,7 @@ func TestDescribeEc2Instances(t *testing.T) {
 }
 
 func TestGetUsernamePerOS(t *testing.T) {
-	aem := modules.AwsEc2Manager{Ec2StartWaitTimeout: 30}
+	aem := aws2.AwsEc2Manager{Ec2StartWaitTimeout: 30}
 	aem.CheckCredentials()
 
 	username := aem.GetUsernamePerOS("bakery")
