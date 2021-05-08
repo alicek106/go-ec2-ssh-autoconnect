@@ -1,7 +1,9 @@
-package modules
+package aws
 
 import (
 	"fmt"
+	"github.com/alicek106/go-ec2-ssh-autoconnect/pkg/config"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"log"
 	"os"
 	"sort"
@@ -13,8 +15,17 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
 )
+
+var svc *AwsEc2Manager
+
+func GetEC2Service() *AwsEc2Manager{
+	if svc == nil {
+		svc = &AwsEc2Manager{Ec2StartWaitTimeout: 30}
+		svc.CheckCredentials()
+	}
+	return svc
+}
 
 // Ec2InstanceInfo : Data struct for storing EC2 instance data
 type Ec2InstanceInfo struct {
@@ -33,47 +44,61 @@ type AwsEc2Manager struct {
 
 // CheckCredentials : Check existing credential from shell or configuartion
 func (aem *AwsEc2Manager) CheckCredentials() {
-	// TODO : Check Credential from configuration or env var
+	// 1. Check fron env
 	accessID := os.Getenv("AWS_ACCESS_KEY_ID")
 	secretKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 	var err error
-	if len(accessID) == 0 || len(secretKey) == 0 {
-		log.Printf("Cannot find credential in environment variable.")
-		ep := GetEnvparser()
-		accessID, secretKey, err = ep.GetCredentials()
-		if err != nil {
-			log.Fatal(err)
-		} else {
-			log.Println("Found credential in configuration file.")
-		}
-	} else {
-		log.Println("Found credential variable in environment variables")
+	if len(accessID) == 1 && len(secretKey) == 1 {
+		log.Println("Loading credentials from environment values..")
+		aem.loadCredentialFromSecret(accessID, secretKey)
+		// Load session from env key
 	}
 
-	aem.ValidateCredential(accessID, secretKey)
+	// 2. Check from configuration file
+	ep := config.GetEnvparser()
+	accessID, secretKey, err = ep.GetCredentials()
+	if err == nil {
+		log.Println("Loading credentials from configuration file..")
+		aem.loadCredentialFromSecret(accessID, secretKey)
+	}
+
+	// 3. Check from AWS Profile (AWS_PROFILE)
+	// It covers (1) assume role profile (AWS_PROFILE refer to ~/.aws/config when using role_arn and shared config)
+	// (2) and AWS_PROFILE with static credentials only defined in ~/.aws/credentials
+	err = aem.loadCredentialFromProfile()
+	if err != nil {
+		log.Fatalf("Error to load : %s", err)
+		os.Exit(100)
+	}
 }
 
-// ValidateCredential : Validate AWS Credential
-func (aem *AwsEc2Manager) ValidateCredential(accessID string, secretKey string) {
-	sess, err := session.NewSession()
-	switch err.(type) {
-	default: // no error
-		session.Must(sess, err)
-	case session.SharedConfigAssumeRoleError:
-		log.Fatal("Error from shared aws config credential assume role (SharedConfigAssumeRoleError). Abort")
-	case error:
-		log.Fatal(err.Error())
+func (aem *AwsEc2Manager) loadCredentialFromProfile() (err error) {
+	aem.session = session.Must(session.NewSessionWithOptions(session.Options{
+		Config:                  aws.Config{
+			Region: aws.String(config.GetEnvparser().GetRegion()),
+		},
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+	aem.client = ec2.New(aem.session)
+	_, err = aem.client.DescribeInstances(nil)
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		log.Printf("Succeed to validate AWS credential.")
 	}
+	return err
+}
 
+func (aem *AwsEc2Manager) loadCredentialFromSecret(accessID string, secretKey string) {
 	// Load session
 	aem.session = session.Must(session.NewSession(&aws.Config{
-		Region:      aws.String("ap-northeast-2"),
+		Region:      aws.String(config.GetEnvparser().GetRegion()),
 		Credentials: credentials.NewStaticCredentials(accessID, secretKey, ""),
 	}))
 
 	// Test AWS function using provided credential
 	aem.client = ec2.New(aem.session)
-	_, err = aem.client.DescribeInstances(nil)
+	_, err := aem.client.DescribeInstances(nil)
 	if err != nil {
 		log.Fatal(err)
 	} else {
@@ -175,7 +200,7 @@ func (aem *AwsEc2Manager) WaitUntilActive(instanceIDs []*string, instanceNames [
 		log.Printf("Start to waiting EC2 instance %s (instance ID : %s)...", instanceNames[index], *instanceIDs[index])
 		for tries := 1; tries <= aem.Ec2StartWaitTimeout; tries++ {
 			// If EC2 instance is not running state
-			if aem.getInstanceStatus(instanceIDs[index:index+1]) != "running" {
+			if aem.GetInstanceStatus(instanceIDs[index:index+1]) != "running" {
 				// If EC2 instance is not running state after 30s, continue to next instance.
 				if tries == 30 {
 					log.Printf("Failed to wait for EC2 instance to be active.")
@@ -263,7 +288,7 @@ func (aem *AwsEc2Manager) GetUsernamePerOS(instanceName string) (sshUsername str
 	return ""
 }
 
-func (aem *AwsEc2Manager) getInstanceStatus(instanceID []*string) (status string) {
+func (aem *AwsEc2Manager) GetInstanceStatus(instanceID []*string) (status string) {
 	input := &ec2.DescribeInstancesInput{
 		InstanceIds: instanceID,
 	}

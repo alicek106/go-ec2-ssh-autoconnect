@@ -1,15 +1,18 @@
-package modules
+package config
 
 import (
+	"errors"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 )
 
+// TODO : Replace this package to viper
 type YamlParserV1 struct {
 	Version string `yaml:"version"`
 	Spec    struct {
+		Region string `yaml:"region"`
 		Credentials struct {
 			AccessKey string `yaml:"accessKey"`
 			SecretKey string `yaml:"secretKey"`
@@ -45,6 +48,10 @@ func (ep *Envparser) GetCredentials() (string, string, error) {
 	// TODO : Check yamlContent if keys exist
 	accessID := ep.yamlContent.Spec.Credentials.AccessKey
 	secretKey := ep.yamlContent.Spec.Credentials.SecretKey
+
+	if accessID == "" || secretKey == "" {
+		return "", "", errors.New("Cannot find credentials in configuration file")
+	}
 	return accessID, secretKey, nil
 }
 
@@ -57,7 +64,7 @@ func (ep *Envparser) GetDefaultKey() (defaultKey string) {
 		}
 	}
 	// TODO : return non-nil if default not exists
-	log.Fatal("Cannot found default key")
+	log.Fatal("Cannot found default key (.spec.privateKeys -> 'default' key)")
 	return defaultKey
 }
 
@@ -92,6 +99,11 @@ func (ep *Envparser) GetGroupInstanceNames(groupName string) (instanceNames []st
 	}
 	log.Fatal(fmt.Sprintf("Cannot find group [%s] in configuration file", groupName))
 	return instanceNames
+}
+
+func (ep *Envparser) GetRegion() (string) {
+	region := ep.yamlContent.Spec.Region
+	return region
 }
 
 //func checkKeys(secretData map[string]interface{}, data []string) error {
