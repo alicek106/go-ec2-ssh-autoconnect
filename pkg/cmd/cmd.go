@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	key string
-	version      = "v0.7" // TODO : version should be injected in build time
-	buildDate    = "1970-01-01T00:00:00Z"
-	gitCommit    = ""
+	key       string
+	version   = "v0.7" // TODO : version should be injected in build time
+	buildDate = "1970-01-01T00:00:00Z"
+	gitCommit = ""
 )
 
 func NewListCommand() *cobra.Command {
@@ -34,7 +34,7 @@ func NewListCommand() *cobra.Command {
 
 func NewStartCommand() *cobra.Command {
 	startCmd := cobra.Command{
-		Use:   "start",
+		Use: "start",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 1 {
 				return errors.New("Require a instance name.")
@@ -59,7 +59,7 @@ func NewStartCommand() *cobra.Command {
 
 func NewStopCommand() *cobra.Command {
 	stopCmd := cobra.Command{
-		Use:   "stop",
+		Use: "stop",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 1 {
 				return errors.New("Require a instance name.")
@@ -103,7 +103,7 @@ func NewGroupCommand() *cobra.Command {
 
 func newGroupStartCommand() *cobra.Command {
 	groupStartCmd := cobra.Command{
-		Use:   "start",
+		Use: "start",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 1 {
 				return errors.New("Require a group name.")
@@ -128,7 +128,7 @@ func newGroupStartCommand() *cobra.Command {
 
 func newGroupStopCommand() *cobra.Command {
 	groupStopCmd := cobra.Command{
-		Use:   "stop",
+		Use: "stop",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 1 {
 				return errors.New("Require a group name.")
@@ -153,7 +153,7 @@ func newGroupStopCommand() *cobra.Command {
 
 func NewConnectCommand() *cobra.Command {
 	connectCmd := cobra.Command{
-		Use:   "connect",
+		Use: "connect",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 1 {
 				return errors.New("Require a instance name.")

@@ -19,7 +19,7 @@ import (
 
 var svc *AwsEc2Manager
 
-func GetEC2Service() *AwsEc2Manager{
+func GetEC2Service() *AwsEc2Manager {
 	if svc == nil {
 		svc = &AwsEc2Manager{Ec2StartWaitTimeout: 30}
 		svc.CheckCredentials()
@@ -74,7 +74,7 @@ func (aem *AwsEc2Manager) CheckCredentials() {
 
 func (aem *AwsEc2Manager) loadCredentialFromProfile() (err error) {
 	aem.session = session.Must(session.NewSessionWithOptions(session.Options{
-		Config:                  aws.Config{
+		Config: aws.Config{
 			Region: aws.String(config.GetEnvparser().GetRegion()),
 		},
 		SharedConfigState: session.SharedConfigEnable,
@@ -116,7 +116,7 @@ func (aem *AwsEc2Manager) GetInstanceIDs(instanceNames []string) []*string {
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			if len(result.Reservations) == 0{
+			if len(result.Reservations) == 0 {
 				log.Fatalf("Cannot find instance name [%s]. Abort", instanceName)
 			}
 			instanceIDs = append(instanceIDs, result.Reservations[0].Instances[0].InstanceId)
@@ -258,7 +258,7 @@ func (aem *AwsEc2Manager) StopInstances(instanceIDs []*string) {
 }
 
 // GetUsernamePerOS : Return proper SSH username per EC2 instsance OS image
-func (aem *AwsEc2Manager) GetUsernamePerOS(instanceName string) (sshUsername string){
+func (aem *AwsEc2Manager) GetUsernamePerOS(instanceName string) (sshUsername string) {
 	filter := aem.getFilterForName(instanceName)
 	result, err := aem.client.DescribeInstances(filter)
 	if err != nil {
@@ -271,7 +271,7 @@ func (aem *AwsEc2Manager) GetUsernamePerOS(instanceName string) (sshUsername str
 			aws.String(amiImageID),
 		},
 	})
-	if err != nil{
+	if err != nil {
 		fmt.Println(err)
 	}
 
@@ -279,7 +279,7 @@ func (aem *AwsEc2Manager) GetUsernamePerOS(instanceName string) (sshUsername str
 	if strings.Contains(imageName, "ubuntu") {
 		log.Printf("Found AMI name : %s, trying to ssh using ubuntu", imageName)
 		return "ubuntu"
-	}else if(strings.Contains(imageName, "amazon") || strings.Contains(imageName, "redhat")){
+	} else if strings.Contains(imageName, "amazon") || strings.Contains(imageName, "redhat") {
 		log.Printf("Found AMI name : %s, trying to ssh using ec2-user", imageName)
 		return "ec2-user"
 	}

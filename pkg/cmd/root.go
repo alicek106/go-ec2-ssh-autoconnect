@@ -8,7 +8,7 @@ const (
 	cliName = "ec2-connect"
 )
 
-func NewCommand() *cobra.Command{
+func NewCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   cliName,
 		Short: "Connect, start, stop, list EC2 instances!",

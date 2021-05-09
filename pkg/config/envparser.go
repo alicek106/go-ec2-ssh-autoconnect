@@ -12,7 +12,7 @@ import (
 type YamlParserV1 struct {
 	Version string `yaml:"version"`
 	Spec    struct {
-		Region string `yaml:"region"`
+		Region      string `yaml:"region"`
 		Credentials struct {
 			AccessKey string `yaml:"accessKey"`
 			SecretKey string `yaml:"secretKey"`
@@ -30,7 +30,7 @@ type YamlParserV1 struct {
 	}
 }
 
-// Envparser : It parses configuration file in /etc/ec2_connect_config.json
+// Envparser : It parses configuration file in /etc/ec2_connect_config.yaml
 type Envparser struct {
 	configPath  string
 	yamlContent YamlParserV1
@@ -70,12 +70,14 @@ func (ep *Envparser) GetDefaultKey() (defaultKey string) {
 
 // OpenConfigFile Return osfile pointer to parse configuration file
 func (ep *Envparser) OpenConfigFile() (result map[string]interface{}) {
-	// Reference : https://tutorialedge.net/golang/parsing-json-with-golang/
 	yamlFile, err := ioutil.ReadFile(ep.configPath)
 	if err != nil {
-		log.Fatal("Unable to open /etc/ec2_connect_config.json. Abort")
+		log.Fatal("Unable to open /etc/ec2_connect_config.yaml. Abort")
 	}
 	err = yaml.Unmarshal(yamlFile, &ep.yamlContent)
+	if err != nil {
+		log.Fatal("Failed to unmarshal /etc/ec2_connect_config.yaml. Abort")
+	}
 	return result
 }
 
@@ -101,7 +103,7 @@ func (ep *Envparser) GetGroupInstanceNames(groupName string) (instanceNames []st
 	return instanceNames
 }
 
-func (ep *Envparser) GetRegion() (string) {
+func (ep *Envparser) GetRegion() string {
 	region := ep.yamlContent.Spec.Region
 	return region
 }
